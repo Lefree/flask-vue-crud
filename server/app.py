@@ -9,7 +9,7 @@ app.config.from_object(__name__)
 #enable CORS
 CORS(app)
 
-@app.route('/ping', methods=['GET']
+@app.route('/ping', methods=['GET'])
 def ping_pong():
     return jsonify('pong!')
 

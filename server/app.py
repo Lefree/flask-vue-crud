@@ -7,7 +7,6 @@ Debug = True
 app = Flask(__name__)
 app.config.from_object(__name__)
 
-#enable CORS
 CORS(app)
 
 BOOKS = [
@@ -47,7 +46,7 @@ def all_books():
         response_object['books'] = BOOKS
     return jsonify(response_object)
     
-@app.route('/books/', methods=['PUT'])
+@app.route('/books/', methods=['PUT', 'DELETE'])
 def single_book(book_id):
     response_object = {'status': 'success'}
     if request.method == 'PUT':
@@ -60,8 +59,9 @@ def single_book(book_id):
             'read': post_data.get('read')
         })
         response_object['message'] = 'Book added!'
-    else:
-        response_object['books'] = BOOKS
+    elif request.method == 'DELETE':
+        remove_book(book_id)
+        response_object['message'] = 'Book removed!'
     return jsonify(response_object)
 
 def remove_book(book_id):

@@ -25,8 +25,8 @@
                   <span v-else>No</span>
               </td>
               <td>
-                <button type="button" class="btn btn-warning btn-sm">Update</button>
-                <button type="button" class="btn btn-danger btn-sm">Delete</button>
+                <button type="button" class="btn btn-warning btn-sm" v-b-modal.book-update-modal @click="editBook(book)">Update</button>
+                <button type="button" class="btn btn-danger btn-sm" @click="onDeleteBook(book)">Delete</button>
               </td>
             </tr>
           </tbody>
@@ -67,6 +67,40 @@
             <b-button type="reset" variant="danger">Reset</b-button>
         </b-form>
     </b-modal>
+    <b-modal ref="editBookModal"
+        id="book-update-modal"
+        title="Update"
+        hide-footer>
+        <b-form @submit="onSubmitUpdate" @reset="onResetUpdate" class="w100">
+            <b-form-group id="form-title-edit-group"
+                label="Title:"
+                label-for="form-title-edit-input">
+                    <b-form-input id="form-title-edit-input"
+                        type="text"
+                        v-model="editForm.title"
+                        required 
+                        placeholder="Enter title">
+                    </b-form-input>
+            </b-form-group>
+            <b-form-group id="form-author-edit-group"
+                label="Author:"
+                label-for="form-author-edit-input">
+                <b-form-input id="form-author-edit-input"
+                    type="text"
+                    v-model="editForm.author"
+                    required 
+                    placeholder="Enter author">
+                </b-form-input> 
+            </b-form-group>
+            <b-form-group id="form-read-edit-input">
+                <b-form-checkbox-group v-model="editForm.read" id="form-checks">
+                    <b-form-checkbox value="true">Read?</b-form-checkbox>
+                </b-form-checkbox-group>
+            </b-form-group>
+            <b-button type="submit" variant="primary">Update</b-button>
+            <b-button type="reset" variant="danger">Canel</b-button>
+        </b-form>
+    </b-modal>
   </div>
 </template>
 
@@ -79,6 +113,12 @@ export default {
         return {
             books: [],
             addBookForm: {
+                title: '',
+                author: '',
+                read: []
+            },
+            editForm: {
+                id: '',
                 title: '',
                 author: '',
                 read: []
@@ -104,20 +144,53 @@ export default {
         addBook(payload) {
             const path = 'http://localhost:5000/books';
             axios.post(path, payload)
-            .then(() => {
-                this.getBooks();
-                this.message = 'Book added!';
-                this.showMessage = true;
-            })
-            .catch((error) => {
-                console.error(error);
-                this.getBooks();
-            });
+                .then(() => {
+                    this.getBooks();
+                    this.message = 'Book added!';
+                    this.showMessage = true;
+                })
+                .catch((error) => {
+                    console.error(error);
+                    this.getBooks();
+                });
+        },
+        editBook(book) {
+            this.editForm = book;
+        },
+        updateBook(payload, bookId) {
+            const path = 'http://localhost:5000/books/${bookId}';
+            axios.put(path, payload)
+                .then(()=> {
+                    this.getBooks();
+                    this.message = 'Book updated!';
+                    this.showMessage = true;
+                })
+                .catch((error) => {
+                    console.log(error);
+                    this.getBooks();
+                });
+        },
+        removeBook(bookId) {
+            const path = 'http://localhost:5000/books/${bookId}';
+            axios.delete(path)
+                .then(() => {
+                    this.getBooks();
+                    this.message = "Book removed!";
+                    this.showMessage = true;
+                })
+                .catch((error) => {
+                    console.log(error);
+                    this.getBooks();
+                });
         },
         initForm() {
             this.addBookForm.title = '';
             this.addBookForm.author = '';
             this.addBookForm.read = [];
+            this.editForm.id = '';
+            this.editForm.title = '';
+            this.editForm.author = '';
+            this.editForm.read = [];
         },
         onSubmit(event) {
             event.preventDefault();
@@ -132,11 +205,34 @@ export default {
             this.addBook(payload);
             this.initForm();
         },
+        onSubmitUpdate(evt) {
+            evt.preventDefault();
+            this.$refs.editBookModal.hide();
+            let read = false;
+            if (this.editForm.read[0]) {
+                read = true;
+            }
+            const payload = {
+                title: this.title,
+                author: this.author,
+                read
+            };
+            this.updateBook(payload, this.editForm.id);
+        },
         onReset(event) {
             event.preventDefault();
             this.$refs.addBookModal.hide();
             this.initForm();
         },
+        onResetUpdate(evt) {
+            evt.preventDefault();
+            this.$refs.editBookModal.hide();
+            this.initForm();
+            this.getBooks();
+        },
+        onDeleteBook(book) {
+            this.removeBook(book.id);
+        }
     },
     created() {
         this.getBooks();
